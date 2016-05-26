@@ -48,13 +48,13 @@ function handleError(res, reason, message, code) {
 
 app.post("/login", function(req, res) {
 
-	console.log(req);
+	// console.log(req);
 
 	if (!(req.body.email || req.body.password)) {
 		handleError(res, "Invalid user input", "Must provide a username and password.", 400);
 	}
 
-	db.collection(USERS_COLLECTION).findOne({email: req.body.email, password: req.body.password}).toArray(function(err, docs) {
+	db.collection(USERS_COLLECTION).findOne({email: req.body.email, password: req.body.password}, function(err, docs) {
 
 	    if (err) {
 	    	handleError(res, err.message, "Failed to get contacts.");
