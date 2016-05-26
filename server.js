@@ -48,6 +48,17 @@ function handleError(res, reason, message, code) {
 
 app.post("/login", function(req, res) {
 
+	console.log(req);
+	// db.collection(USERS_COLLECTION).find({}).toArray(function(err, docs) {
+
+	//     if (err) {
+	//     	handleError(res, err.message, "Failed to get contacts.");
+	//     } else {
+	//     	res.status(200).json(docs);
+	//     }
+
+	// });
+
 });
 
 
