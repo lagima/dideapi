@@ -1,94 +1,155 @@
 var express = require("express");
 var path = require("path");
 var bodyParser = require("body-parser");
-var mongodb = require("mongodb");
-var ObjectID = mongodb.ObjectID;
+var morgan = require('morgan');
+var mongoose = require('mongoose');
+var passport = require('passport');
+var config = require('./config/database'); // get db config file
+var User = require('./app/models/user'); // get the mongoose model
+var port = process.env.PORT || 8080;
+var jwt = require('jwt-simple');
 
-var USERS_COLLECTION = "users";
-
+// Initialise the app
 var app = express();
-app.use(express.static(__dirname + "/public"));
+
+// get our request parameters
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// Create a database variable outside of the database connection callback to reuse the connection pool in your app.
-var db;
+// log to console
+app.use(morgan('dev'));
 
-// Connect to the database before starting the application server.
-mongodb.MongoClient.connect(process.env.MONGODB_URI, function(err, database) {
+// Use the passport package in our application
+app.use(passport.initialize());
 
-	if (err) {
-		console.log(err);
-		process.exit(1);
+// demo Route (GET http://localhost:8080)
+app.get('/', function(req, res) {
+	res.send('Hello! The API is at http://api.pickatask.com:' + port + '/api');
+});
+
+// Start the server
+app.listen(port);
+console.log('There will be dragons: http://api.pickatask.com:' + port);
+
+// connect to database
+mongoose.connect(config.database);
+
+// pass passport for configuration
+require('./config/passport')(passport);
+
+// bundle our routes
+var apiRoutes = express.Router();
+
+// create a new user account (POST /api/signup)
+apiRoutes.post('/signup', function(req, res) {
+
+	if(!req.body.email || !req.body.password) {
+
+		res.json({success: false, msg: 'Please pass email and password.'});
+
+	} else {
+
+		var newUser = new User({
+			email: req.body.email,
+			password: req.body.password
+		});
+
+		// save the user
+		newUser.save(function(err) {
+
+			if(err)
+				return res.json({success: false, msg: 'Username already exists.'});
+
+			res.json({success: true, msg: 'Successful created new user.'});
+		});
 	}
-
-	// Save database object from the callback for reuse.
-	db = database;
-	console.log("Database connection ready");
-
-	// Initialize the app.
-	var server = app.listen(process.env.PORT || 8080, function () {
-		var port = server.address().port;
-		console.log("App now running on port", port);
-	});
 
 });
 
-// API Routes below *********************************
+// route to authenticate a user (POST /api/authenticate)
+apiRoutes.post('/authenticate', function(req, res) {
 
-// Generic error handler used by all endpoints.
-function handleError(res, reason, message, code) {
-  console.log("ERROR: " + reason);
-  res.status(code || 500).json({"error": message});
-}
+	User.findOne({
 
-/*  "/login"
- *    POST: Login the user
- */
+		email: req.body.email
 
+	}, function(err, user) {
 
-app.post("/login", function(req, res) {
+		if(err)
+			throw err;
 
-	// console.log(req);
+		if(!user) {
 
-	if (!(req.body.email || req.body.password)) {
-		handleError(res, "Invalid user input", "Must provide a username and password.", 400);
-	}
+			res.send({success: false, msg: 'Authentication failed. User not found.'});
 
-	db.collection(USERS_COLLECTION).findOne({email: req.body.email, password: req.body.password}, function(err, docs) {
-
-	    if (err) {
-	    	handleError(res, err.message, "Failed to get contacts.");
-	    } else {
-	    	res.status(200).json(docs);
-	    }
-
-	});
-
-});
-
-
-/*  "/createuser"
- *    POST: Create the user
- */
-
-
-app.post("/createuser", function(req, res) {
-
-	var newUser = req.body;
-	newUser.createDate = new Date();
-
-	if (!(req.body.email || req.body.password)) {
-		handleError(res, "Invalid user input", "Must provide a username and password.", 400);
-	}
-
-	db.collection(USERS_COLLECTION).insertOne(newUser, function(err, doc) {
-
-		if (err) {
-			handleError(res, err.message, "Failed to create new user.");
 		} else {
-			res.status(201).json(doc.ops[0]);
-		}
 
+			// check if password matches
+			user.comparePassword(req.body.password, function(err, isMatch) {
+
+				if(isMatch && !err) {
+					// if user is found and password is right create a token
+					var token = jwt.encode(user, config.secret);
+					// return the information including token as JSON
+					res.json({success: true, token: 'JWT ' + token});
+				} else {
+					res.send({success: false, msg: 'Authentication failed. Wrong password.'});
+				}
+
+			});
+		}
 	});
+});
+
+// route to a restricted info (GET /api/memberinfo)
+apiRoutes.get('/memberinfo', passport.authenticate('jwt', {session: false}), function(req, res) {
+
+	var token = getToken(req.headers);
+
+	if(token) {
+
+		var decoded = jwt.decode(token, config.secret);
+
+		User.findOne({
+
+			email: decoded.email
+
+		}, function(err, user) {
+
+				if(err)
+					throw err;
+
+				if(!user) {
+					return res.status(403).send({success: false, msg: 'Authentication failed. User not found.'});
+				} else {
+					res.json({success: true, msg: 'Welcome in the member area ' + user.email + '!'});
+				}
+		});
+
+	} else {
+		return res.status(403).send({success: false, msg: 'No token provided.'});
+	}
 
 });
+
+
+// Private method used to get the token
+function getToken(headers) {
+
+	if(headers && headers.authorization) {
+
+		var parted = headers.authorization.split(' ');
+
+		if (parted.length === 2)
+			return parted[1];
+
+		else
+			return null;
+
+	} else {
+		return null;
+	}
+};
+
+// connect the api routes under /api/*
+app.use('/v1', apiRoutes);
