@@ -58,7 +58,7 @@ apiRoutes.post('/signup', function(req, res) {
 		newUser.save(function(err) {
 
 			if(err)
-				return res.json({success: false, msg: 'Username already exists.'});
+				return res.json({success: false, msg: 'You are already registered. Please login!'});
 
 			res.json({success: true, msg: 'Successful created new user.'});
 		});
