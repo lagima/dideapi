@@ -6,6 +6,7 @@ var mongoose = require('mongoose');
 var passport = require('passport');
 var config = require('./config/database'); // get db config file
 var User = require('./app/models/user'); // get the mongoose model
+var Grocery = require('./app/models/grocery'); // get the mongoose model
 var port = process.env.PORT || 8080;
 var jwt = require('jwt-simple');
 
@@ -101,55 +102,50 @@ apiRoutes.post('/authenticate', function(req, res) {
 	});
 });
 
-// route to a restricted info (GET /api/memberinfo)
-apiRoutes.get('/memberinfo', passport.authenticate('jwt', {session: false}), function(req, res) {
+// route to a restricted info (GET /api/grocery/add)
+apiRoutes.post('/grocery/add', passport.authenticate('jwt', {session: false}), function(req, res) {
 
-	var token = getToken(req.headers);
+	if(!req.body.name) {
 
-	if(token) {
-
-		var decoded = jwt.decode(token, config.secret);
-
-		User.findOne({
-
-			email: decoded.email
-
-		}, function(err, user) {
-
-				if(err)
-					throw err;
-
-				if(!user) {
-					return res.status(403).send({success: false, msg: 'Authentication failed. User not found.'});
-				} else {
-					res.json({success: true, msg: 'Welcome in the member area ' + user.email + '!'});
-				}
-		});
+		res.json({success: false, msg: 'Please pass email and password.'});
 
 	} else {
-		return res.status(403).send({success: false, msg: 'No token provided.'});
+
+		var newGroceryIem = new Grocery({
+			name: req.body.name,
+			userid: req.user._id,
+			completed: 0
+		});
+
+		// save the user
+		newGroceryIem.save(function(err) {
+
+			if(err)
+				return res.json({success: false, msg: 'Something went wrong'});
+
+			res.json({success: true, msg: 'Added the item to your list.'});
+		});
 	}
 
 });
 
+// route to a restricted info (GET /api/grocery/list)
+apiRoutes.get('/grocery/list', passport.authenticate('jwt', {session: false}), function(req, res) {
 
-// Private method used to get the token
-function getToken(headers) {
+	Grocery.find({userid: req.user._id}, function(err, groceryList) {
 
-	if(headers && headers.authorization) {
+		if(err)
+			throw err;
 
-		var parted = headers.authorization.split(' ');
+		if(!groceryList)
+			return res.status(403).send({success: false, msg: 'No list found'});
 
-		if (parted.length === 2)
-			return parted[1];
+		res.json({success: true, msg: 'Lists found!', list: groceryList});
 
-		else
-			return null;
+	});
 
-	} else {
-		return null;
-	}
-};
+});
+
 
 // connect the api routes under /api/*
 app.use('/v1', apiRoutes);
