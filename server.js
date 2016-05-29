@@ -117,13 +117,13 @@ apiRoutes.post('/grocery/add', passport.authenticate('jwt', {session: false}), f
 			completed: 0
 		});
 
-		// save the user
-		newGroceryIem.save(function(err) {
+		// save the item
+		newGroceryIem.save(function(err, groceryItem) {
 
 			if(err)
 				return res.json({success: false, msg: 'Something went wrong'});
 
-			res.json({success: true, msg: 'Added the item to your list.'});
+			res.json({success: true, msg: 'Added the item to your list.', list: groceryItem});
 		});
 	}
 
