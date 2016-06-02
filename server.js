@@ -104,6 +104,8 @@ apiRoutes.post('/user/updatelocation', passport.authenticate('jwt', {session: fa
 	if(!req.body.latitude || !req.body.longitude)
 		return res.json({success: false, msg: 'Please pass the latitude and longitude.'});
 
+	console.dir(req.user);
+
 	User.findById(req.user._id, function(err, user) {
 
 		if(err)
