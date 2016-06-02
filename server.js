@@ -41,8 +41,8 @@ require('./config/passport')(passport);
 // bundle our routes
 var apiRoutes = express.Router();
 
-// create a new user account (POST /api/signup)
-apiRoutes.post('/signup', function(req, res) {
+// create a new user account (POST /api/user/signup)
+apiRoutes.post('/user/signup', function(req, res) {
 
 	if(!req.body.email || !req.body.password) {
 
@@ -67,14 +67,10 @@ apiRoutes.post('/signup', function(req, res) {
 
 });
 
-// route to authenticate a user (POST /api/authenticate)
-apiRoutes.post('/authenticate', function(req, res) {
+// route to authenticate a user (POST /api/user/authenticate)
+apiRoutes.post('/user/authenticate', function(req, res) {
 
-	User.findOne({
-
-		email: req.body.email
-
-	}, function(err, user) {
+	User.findOne({email: req.body.email}, function(err, user) {
 
 		if(err)
 			throw err;
@@ -101,6 +97,51 @@ apiRoutes.post('/authenticate', function(req, res) {
 		}
 	});
 });
+
+// route to a restricted info (GET /api/user/updatelocation)
+apiRoutes.post('/user/updatelocation', passport.authenticate('jwt', {session: false}), function(req, res) {
+
+	if(!req.body.latitude || !req.body.longitude)
+		return res.json({success: false, msg: 'Please pass the latitude and longitude.'});
+
+	User.findById(req.user._id, function(err, user) {
+
+		if(err)
+			return res.json({success: false, msg: 'Something went wrong'});
+
+		user.latitude = req.body.latitude;
+		user.longitude = req.body.longitude;
+
+		user.save(function(err) {
+
+			if (err)
+				return res.json({success: false, msg: 'Something went wrong'});
+
+			res.json({success: true, msg: 'Successful updated user location.'});
+
+		});
+
+	});
+
+});
+
+// route to a restricted info (GET /api/user/get)
+apiRoutes.get('/user/get', passport.authenticate('jwt', {session: false}), function(req, res) {
+
+	User.findOne(req.body.email, function(err, user) {
+
+		if(err)
+			return res.json({success: false, msg: 'Something went wrong'});
+
+		if(!user)
+			return res.status(403).send({success: false, msg: 'No user found'});
+
+		res.json({success: true, msg: 'User found!', user: user});
+
+	});
+
+});
+
 
 // route to a restricted info (GET /api/grocery/add)
 apiRoutes.post('/grocery/add', passport.authenticate('jwt', {session: false}), function(req, res) {
@@ -135,7 +176,7 @@ apiRoutes.get('/grocery/list', passport.authenticate('jwt', {session: false}), f
 	Grocery.find({userid: req.user._id}, function(err, groceryList) {
 
 		if(err)
-			throw err;
+			return res.json({success: false, msg: 'Something went wrong'});
 
 		if(!groceryList)
 			return res.status(403).send({success: false, msg: 'No list found'});

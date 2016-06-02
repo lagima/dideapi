@@ -12,6 +12,12 @@ var UserSchema = new Schema({
   	password: {
 		type: String,
 		required: true
+	},
+	latitude: {
+		type: Number
+	},
+	longitude: {
+		type: Number
 	}
 });
 
