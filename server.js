@@ -104,7 +104,7 @@ apiRoutes.post('/user/updatelocation', passport.authenticate('jwt', {session: fa
 	if(!req.body.latitude || !req.body.longitude)
 		return res.json({success: false, msg: 'Please pass the latitude and longitude.'});
 
-	console.dir(req.user);
+	// console.dir(req.user);
 
 	User.findById(req.user._id, function(err, user) {
 
@@ -130,7 +130,7 @@ apiRoutes.post('/user/updatelocation', passport.authenticate('jwt', {session: fa
 // route to a restricted info (GET /api/user/get)
 apiRoutes.get('/user/get', passport.authenticate('jwt', {session: false}), function(req, res) {
 
-	User.findOne(req.body.email, function(err, user) {
+	User.findOne({email: req.body.email}, function(err, user) {
 
 		if(err)
 			return res.json({success: false, msg: 'Something went wrong'});
