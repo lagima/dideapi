@@ -127,8 +127,8 @@ apiRoutes.post('/user/updatelocation', passport.authenticate('jwt', {session: fa
 
 });
 
-// route to a restricted info (GET /api/user/get)
-apiRoutes.get('/user/get', passport.authenticate('jwt', {session: false}), function(req, res) {
+// route to a restricted info (POST /api/user/get)
+apiRoutes.post('/user/find', passport.authenticate('jwt', {session: false}), function(req, res) {
 
 	User.findOne({email: req.body.email}, function(err, user) {
 
