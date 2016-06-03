@@ -127,10 +127,27 @@ apiRoutes.post('/user/updatelocation', passport.authenticate('jwt', {session: fa
 
 });
 
-// route to a restricted info (POST /api/user/get)
+// route to a restricted info (POST /api/user/find)
 apiRoutes.post('/user/find', passport.authenticate('jwt', {session: false}), function(req, res) {
 
 	User.findOne({email: req.body.email}, function(err, user) {
+
+		if(err)
+			return res.json({success: false, msg: 'Something went wrong'});
+
+		if(!user)
+			return res.status(403).send({success: false, msg: 'No user found'});
+
+		res.json({success: true, msg: 'User found!', user: user});
+
+	});
+
+});
+
+// route to a restricted info (GET /api/user/findall)
+apiRoutes.get('/user/findall', passport.authenticate('jwt', {session: false}), function(req, res) {
+
+	User.find({}, function(err, user) {
 
 		if(err)
 			return res.json({success: false, msg: 'Something went wrong'});
