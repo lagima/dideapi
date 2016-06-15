@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Socket IO</title>
+
+	<script src="https://code.jquery.com/jquery-3.0.0.min.js" integrity="sha256-JmvOoLtYsmqlsWxa7mDSLMwa6dZ9rrIdtrrVYRnDRH0=" crossorigin="anonymous"></script>
+	<script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+	<p>Latitude: <input type="text" class="lat" value="-36.8457066"></p>
+	<p>Longitude: <input type="number" class="lon" value="174.7686026" step="0.00001"></p>
+
+	<button class="update">Update</button>
+	<script>
+		$(function(){
+
+			var socket = io.connect('http://192.168.1.69:5000', {
+			  'query': 'token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI1NzQ4MmYzMDlhZTZjMzU4NzAzMDY2Y2EiLCJlbWFpbCI6InNrZGVlcGFrLm56QGdtYWlsLmNvbSIsInBhc3N3b3JkIjoiJDJhJDEwJHVxc25pMEZWU0xtU1h1SVZKNWdGL2VMaFQyRTRjeU1nMFVDY1N4VkpiS3hIaDd4R0FHaHZLIiwiX192IjowLCJsYXRpdHVkZSI6LTM2Ljg0NjE0NTM2NzY1MDY4NSwibG9uZ2l0dWRlIjoxNzQuNzY2MTgyMjkzNDkxMDh9.J_S8PUVaGfFUwqhazNL2hHnsno6oDyNjmX99Wg5_fLc'
+			});
+
+			// socket.on('connect', function(so) {
+			// 	so.emit('send location', {latitude: '64.998776', longitude: '155.887676', userid: '57482f309ae6c358703066ca'});
+			// });
+
+			$(document).on('click', '.update, .lon', function() {
+				console.log("Updating..");
+				socket.emit('sendlocation', {latitude: $('.lat').val(), longitude: $('.lon').val(), userid: '575001b1d3796c1100c366a7'});
+			})
+
+			socket.on('locationupdate', function(data) {
+				$('.lat').html(data.latitude);
+				$('.lon').html(data.longitude);
+			});
+
+		});
+	</script>
+</body>
+</html>

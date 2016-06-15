@@ -13,6 +13,10 @@ var UserSchema = new Schema({
 		type: String,
 		required: true
 	},
+	type: {
+		type: String,
+		required: true
+	},
 	latitude: {
 		type: Number
 	},

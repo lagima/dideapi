@@ -15,7 +15,7 @@ var GrocerySchema = new Schema({
 	completed: {
 		type: Number,
 		required: true
-	}
+	},
 });
 
 
