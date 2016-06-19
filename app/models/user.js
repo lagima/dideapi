@@ -4,7 +4,11 @@ var bcrypt = require('bcrypt');
 
 // set up a mongoose model
 var UserSchema = new Schema({
-  	email: {
+  	name: {
+		type: String,
+		required: true
+	},
+	email: {
 		type: String,
 		unique: true,
 		required: true
@@ -16,6 +20,9 @@ var UserSchema = new Schema({
 	type: {
 		type: String,
 		required: true
+	},
+	online: {
+		type: Number
 	},
 	latitude: {
 		type: Number

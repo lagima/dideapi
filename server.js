@@ -316,17 +316,6 @@ io.sockets.use(socketioJwt.authorize({
 	handshake: true
 }));
 
-
-// sio.of('/io/groceries').on('connection', socketioJwt.authorize({
-// 	secret: config.secret,
-// 	timeout: 15000 // 15 seconds to send the authentication message
-// }));
-
-// io.on('connection', socketioJwt.authorize({
-// 	secret: config.secret,
-// 	timeout: 15000 // 15 seconds to send the authentication message
-// }));
-
 io.sockets.on('connection', function(socket) {
 
 	// Push it to the connections
@@ -340,40 +329,20 @@ io.sockets.on('connection', function(socket) {
 		console.log('Disconnected: %s, total connections is %s', socket.decoded_token.email, connections.length);
 	});
 
-	socket.on('sendlocation', function(data) {
-		socket.broadcast.emit('locationupdate', data);
-		// console.log(data);
+	socket.on('requeststartlocation', function(data) {
+		socket.broadcast.emit('startlocationupdate', data);
+		console.log("Sending location updates of %s", data.userid);
 	});
 
-	// sio.sockets.emit('groceryupdate', "Testing data");
-	// socket.broadcast.emit('groceryupdate', "Testing data");
+	socket.on('requeststoplocation', function(data) {
+		socket.broadcast.emit('stoplocationupdate', data);
+		console.log("Stopping location updates of %s", data.userid);
+	});
 
-	// socket.broadcast.emit('groceryupdate', function(msg) {
-
-		// console.dir(msg);
-		// Grocery.find({userid: req.user._id}, function(err, groceryList) {
-
-		// 	if(err) {
-		// 		var data = {success: false, msg: 'Something went wrong'};
-		// 		socket.emit('grocery/out', data);
-		// 		socket.broadcast.emit('grocery/out', data);
-		// 		return;
-		// 	}
-
-		// 	if(!groceryList) {
-		// 		var data = {success: false, msg: 'No list found'};
-		// 		socket.emit('grocery/out', data);
-		// 		socket.broadcast.emit('grocery/out', data);
-		// 		return;
-		// 	}
-
-		// 	var data = {success: true, msg: 'Lists found!', list: groceryList};
-		// 	socket.emit('grocery/out', data);
-		// 	socket.broadcast.emit('grocery/out', data);
-
-		// });
-
-	// });
+	socket.on('sendlocation', function(data) {
+		socket.broadcast.emit('locationupdate', data);
+		console.log("Location updates from %s", data.userid);
+	});
 
 });
 
