@@ -1,5 +1,7 @@
 var express = require("express");
-var http = require('http');
+var fs = require("fs");
+// var http = require('http');
+var https = require('https');
 var socketio = require("socket.io");
 var path = require("path");
 var bodyParser = require("body-parser");
@@ -15,8 +17,16 @@ var socketioJwt = require('socketio-jwt');
 
 // Initialise the app
 var app = express();
-var server = http.createServer(app);
-var io = socketio.listen(server);
+
+// Initialise the server
+var options = {
+	key: fs.readFileSync('./server.key'),
+	cert: fs.readFileSync('./server.crt')
+};
+var server = https.createServer(options, app);
+
+// var server = http.createServer(app);
+var io = socketio.listen(server, options);
 
 // Some placeholders for socket io
 var connections = [];
