@@ -331,7 +331,7 @@ io.sockets.on('connection', function(socket) {
 
 	socket.on('requeststartlocation', function(data) {
 		socket.broadcast.emit('startlocationupdate', data);
-		console.log("Sending location updates of %s", data.userid);
+		console.log("Requesting location updates of %s", data.userid);
 	});
 
 	socket.on('requeststoplocation', function(data) {
